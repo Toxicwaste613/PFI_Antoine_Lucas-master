@@ -84,3 +84,15 @@ function DeleteUser(id, successCallBack, errorCallBack) {
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
+function deleteToken(){
+    localStorage.removeItem('token');
+}
+function storeToken(tokeninfo){
+
+}
+function getUserInfo(userId, successCallBack, errorCallBack){
+
+}
+function login(credentials, successCallBack,errorCallBack){
+    
+}
