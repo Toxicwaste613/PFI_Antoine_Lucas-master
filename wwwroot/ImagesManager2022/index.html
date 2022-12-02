@@ -485,7 +485,7 @@
         }
         //On récupère les infos de l'utilisateur.
         function retrieveUserInfo() {
-
+            return JSON.parse(localStorage.getItem('user'));
         }
         //C'est relié au Login en retrivant l'email et le password
         function retrieveCredentials() {
@@ -493,7 +493,7 @@
         }
         //Ça correspond à la vérification du code fournis par le courriel automatisé
         function showEmailVerificationDlg(user){
-            return JSON.parse(localStorage.getItem('user'));
+            
         }
         //Ça correspond à la vérification du code fournis par le courriel automatisé, ici on retourne le verifyUser
         function verifyCodeFromForm(){
@@ -579,7 +579,7 @@
                     }
                 }]
             });
-            //$("#newLogoutCmd").click(signOut)
+            $("#newLogoutCmd").click(signOut)
 
             $("#confirmDeleteImageDlg").dialog({
                 title: "Attention!",
