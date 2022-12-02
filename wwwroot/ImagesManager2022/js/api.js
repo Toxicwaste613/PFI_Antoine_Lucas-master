@@ -1,6 +1,5 @@
-const apiBaseURL = "http://localhost:5000/";
-const userBaseURL = "http://localhost:5000/accounts/";
-
+const apiBaseURL = "http://localhost:5000/api/images";
+const hostURL = "http://localhost:5000/";
 
 function HEAD(successCallBack, errorCallBack) {
     $.ajax({
@@ -88,11 +87,34 @@ function deleteToken(){
     localStorage.removeItem('token');
 }
 function storeToken(tokeninfo){
+    localStorage.setItem('token', tokeninfo.Access_token);
+}
+function createToken(){
 
 }
-function getUserInfo(userId, successCallBack, errorCallBack){
-
+//À CHANGÉ SI POSSIBLE
+function getUserInfo(userId, successCallBack, errorCallBack) {
+    $.ajax({
+        url: hostURL + "accounts/index/" + userId,
+        type: 'GET',
+        success: (userInfo) => {
+            localStorage.setItem('user', JSON.stringify(userInfo));
+            successCallBack();
+        },
+        error: function (jqXHR) { errorCallBack(jqXHR.status) }
+    })
 }
-function login(credentials, successCallBack,errorCallBack){
-    
+//À CHANGÉ SI POSSIBLE
+function login(credentials, successCallBack, errorCallBack) {
+    $.ajax({
+        url: hostURL + "token",
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(credentials),
+        success: (tokenInfo) => {
+            storeToken(tokenInfo);
+            getUserInfo(tokenInfo.UserId, successCallBack, errorCallBack);
+        },
+        error: function (jqXHR) { errorCallBack(jqXHR.status) }
+    });
 }

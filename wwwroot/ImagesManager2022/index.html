@@ -59,8 +59,20 @@
                 <span class="cmd fa fa-plus-square" id="newImageCmd" title="Ajouter un image"
                     data-toggle="tooltip"></span>
             </div>
-            <span class="cmd fa fa-user-plus" id="newAccountCmd" title="Connexion/deconnexion"
-                data-toggle="tooltip"></span>
+            <div class="connectionPanel">
+                <div class="loggedUserAvatarContainer" id="loggedUserAvatarContainer"></div>
+                <div id="loggedUserName"></div>
+                <span class="cmd fa-sharp fa-solid fa-address-book" id="newAccountCmd" title="Mon Profil"
+                    data-toggle="tooltip"></span>
+                <span class="cmd fa fa-minus-square" id="newLogoutCmd" title="Se déconnecter"
+                    data-toggle="tooltip"></span>
+                <div>
+                    <span class="cmd fa-sharp fa-solid fa-arrow-up-from-bracket" id="newloginCmd" title="Se connecter"
+                        data-toggle="tooltip"></span>
+                    <span class="cmd fa fa-registered" id="newRegisterCmd" title="Enregister"
+                        data-toggle="tooltip"></span>
+                </div>
+            </div>
         </div>
 
         <div class="scrollContainer">
@@ -98,11 +110,16 @@
     </div>
 
     <div>
-        <div id="signInDlg">
-            <div id="signInDlg">
-                <!--Faire un form pour créer un compte-->
-            </div>
+        <div id="loginDlg">
+            <form id="loginForm">
+                <label for="email_input" class="form-control" required>Email</label>
+                <input type="text" id="email_input" class="form-control" required>
+
+                <label for="password_input">Password</label>
+                <input type="password" id="password_input" class="form-control" required>
+            </form>
         </div>
+
         <div id="ConfirmDeleteDlg">
             <span id="confirmationMessage">Êtes-vous sûr de vouloir faire ça?</span>
         </div>
@@ -171,6 +188,9 @@
         let appendCount = 3;
         let previousScrollPosition = 0;
         let appendMode = false;
+
+        $("#newAccountCmd").hide();
+        $("#newLogoutCmd").hide();
 
         init_UI();
         HEAD(checkETag, error);
@@ -417,42 +437,67 @@
             ImageUploader.setImage('image', image.OriginalURL);
         }
         //C'est l'ouverture du dlg pour se connecter
-        function signIn(){
-        //idem, mais pour se déconnecter
+        function signIn() {
+            holdCheckETag = true;
+            createMode = true;
+            $("#loginDlg").dialog('option', 'title', "Se connecter");
+            $("#loginDlgOkBtn").text("Connexion");
+            $("#loginDlg").dialog('open');
         }
+        //idem, mais pour se déconnecter
         function signOut(){
-
+            holdCheckETag = true;
+            createMode = true;
+            $("#logoutDlg").dialog('option', 'title', "Se connecter");
+            $("#logoutDlgOkBtn").text("Connexion");
+            $("#logoutDlg").dialog('open');
         }
         //ça ouvre la page la dlg de confirmation
         function updateRegister(){
-        
+            
         }
         //ça permet à la connection automatique
         function updateConfirmation(){
         
         }
         //Ça vient changer le HTML pour faire comme si un compte est connecté
-        function updateConnected(){
-        
+        function updateConnected() {
+            //insertProfileInfomation();
+            let userInfo = retrieveUserInfo();
+            console.log(userInfo)
+            console.log(userInfo.Name)
+            console.log(userInfo.Id)
+
+            // afficher avatar et nom usager
+            $('#loggedUserAvatarContainer').empty();
+            $('#loggedUserAvatarContainer').append($("<img src='" + userInfo.AvatarURL + "' />"));
+            $("#loggedUserName").text(userInfo.Name);
+
+            $("#newloginCmd").hide();
+            $("#newRegisterCmd").hide();
+            $("#newAccountCmd").show();
+            $("#newLogoutCmd").show();
+            getImagesList();
         }
         //Ça vient rechanger le HTML pour faire en sorte que la page revienne comme avant(non connecté) (Le token va jouer un grand rôle la-dessus)
         function updateDisconnect(){
-        
+            
         }
         //On récupère les infos de l'utilisateur.
         function retrieveUserInfo() {
 
         }
         //C'est relié au Login en retrivant l'email et le password
-        function retrieveCredentials(){
-
+        function retrieveCredentials() {
+            return { Email: $("#email_input").val(), Password: $("#password_input").val() }
         }
         //Ça correspond à la vérification du code fournis par le courriel automatisé
         function showEmailVerificationDlg(user){
-
+            return JSON.parse(localStorage.getItem('user'));
         }
         //Ça correspond à la vérification du code fournis par le courriel automatisé, ici on retourne le verifyUser
         function verifyCodeFromForm(){
+            let userInfo = retrieveUserInfo();
 
         }
         //c'est pour l'ouverture du dialogue pour l'enregistrement
@@ -504,9 +549,8 @@
             });
 
 
-            $("#newAccountCmd").click(newAccount)
-
-            $("#accountDlg").dialog({
+            $("#newLoginCmd").click(signIn)
+            $("#loginDlg").dialog({
                 title: "...",
                 autoOpen: false,
                 modal: true,
@@ -520,21 +564,11 @@
                 maxHeight: 780,
                 position: { my: "top", at: "top", of: window },
                 buttons: [{
-                    id: "accountDlgOkBtn",
-                    text: "Title will be changed dynamically",
+                    id: "loginDlgOkBtn",
+                    text: "login",
                     click: function () {
-                        let account = accountFromForm();
-                        if (account) {
-                            if (createMode) {
-                                POST(account, error);
-                                //$(".scrollContainer").scrollTop(0);
-                            }
-                            else
-                                PUT(account, error);
-                            resetaccountForm();
-                            holdCheckETag = false;
-                            $(this).dialog("close");
-                        }
+                        login(retrieveCredentials(), updateConnected, error);
+                        $(this).dialog("close");
                     }
                 },
                 {
@@ -545,6 +579,7 @@
                     }
                 }]
             });
+            //$("#newLogoutCmd").click(signOut)
 
             $("#confirmDeleteImageDlg").dialog({
                 title: "Attention!",
@@ -624,6 +659,7 @@
                     }
                 }]
             });
+
 
             $(".scrollContainer").scroll(function () {
                 if ($(".scrollContainer").scrollTop() + $(".scrollContainer").innerHeight() >= $("#imagesList").height()) {
