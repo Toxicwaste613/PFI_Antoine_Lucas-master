@@ -8,7 +8,7 @@
 // Lionel-Groulx College
 /////////////////////////////////////////////////////////////////////
 
-const queryString = require("query-string");
+const queryString = require('query-string');
 const Response = require('./response');
 const utilities = require('./utilities.js');
 let httpContext = null;

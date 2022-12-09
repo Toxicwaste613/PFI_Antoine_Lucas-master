@@ -10,6 +10,7 @@ function HEAD(successCallBack, errorCallBack) {
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
+
 function GET_ID(id, successCallBack, errorCallBack) {
     $.ajax({
         url: apiBaseURL + "/" + id,
@@ -18,8 +19,9 @@ function GET_ID(id, successCallBack, errorCallBack) {
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
+
 function GET_ALL(successCallBack, errorCallBack, queryString = null) {
-    let url = apiBaseURL + "api/images" + (queryString ? queryString : "");
+    let url = apiBaseURL + (queryString ? queryString : "");
     $.ajax({
         url: url,
         type: 'GET',
@@ -27,6 +29,10 @@ function GET_ALL(successCallBack, errorCallBack, queryString = null) {
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
+
+//---------------------------------------------------------------
+//-------------          IMAGE     ------------------------------
+//---------------------------------------------------------------
 function PostImage(data, successCallBack, errorCallBack) {
     $.ajax({
         url: apiBaseURL,
@@ -37,6 +43,7 @@ function PostImage(data, successCallBack, errorCallBack) {
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
+
 function PutImage(bookmark, successCallBack, errorCallBack) {
     $.ajax({
         url: apiBaseURL + "/" + bookmark.Id,
@@ -47,6 +54,7 @@ function PutImage(bookmark, successCallBack, errorCallBack) {
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
+
 function DeleteImage(id, successCallBack, errorCallBack) {
     $.ajax({
         url: apiBaseURL + "/" + id,
@@ -55,19 +63,27 @@ function DeleteImage(id, successCallBack, errorCallBack) {
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
+
+
+//---------------------------------------------------------------
+//-------------          USER      ------------------------------
+//---------------------------------------------------------------
+// POST: accounts/register body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]
 function PostUser(data, successCallBack, errorCallBack) {
     $.ajax({
-        url: apiBaseURL,
+        url: hostURL + "accounts/register",
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(data),
-        success: (data) => { successCallBack(data) },
+        success: (newData) => { successCallBack(newData.Id) },
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
+
+
 function PutUser(bookmark, successCallBack, errorCallBack) {
     $.ajax({
-        url: apiBaseURL + "/" + bookmark.Id,
+        url: hostURL + "/" + bookmark.Id,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(bookmark),
@@ -75,24 +91,58 @@ function PutUser(bookmark, successCallBack, errorCallBack) {
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
+
+
 function DeleteUser(id, successCallBack, errorCallBack) {
     $.ajax({
-        url: apiBaseURL + "/" + id,
+        url: hostURL + "/" + id,
         type: 'DELETE',
         success: () => { successCallBack() },
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
-function deleteToken(){
+
+
+function verifyUser(verifyUser, successCallBack, errorCallBack) {
+    console.log(verifyUser);
+    $.ajax({
+        url: hostURL + "accounts/verify?id=" + verifyUser.Id + "&code=" + verifyUser.VerifyCode,
+        type: 'GET',
+        contentType: 'application/json',
+        data: JSON.stringify(verifyUser),
+        success: (verifyUser) => { StoreToken(verifyUser); successCallBack(verifyUser); },
+        error: function (jqXHR) { errorCallBack(jqXHR.status) }
+    });
+}
+
+
+function editUser(user, successCallBack, errorCallBack) {
+    $.ajax({
+        url: hostURL + "accounts/modify",
+        type: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: (changedUser) => { successCallBack(changedUser.Id) },
+        error: function (jqXHR) { errorCallBack(jqXHR.status) }
+    });
+}
+
+
+//---------------------------------------------------------------
+//-------------          TOKEN     ------------------------------
+//---------------------------------------------------------------
+function DeleteToken() {
     localStorage.removeItem('token');
 }
-function storeToken(tokeninfo){
+
+
+function StoreToken(tokeninfo) {
     localStorage.setItem('token', tokeninfo.Access_token);
 }
-function createToken(){
 
-}
-//À CHANGÉ SI POSSIBLE
+
+
+
 function getUserInfo(userId, successCallBack, errorCallBack) {
     $.ajax({
         url: hostURL + "accounts/index/" + userId,
@@ -104,16 +154,33 @@ function getUserInfo(userId, successCallBack, errorCallBack) {
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     })
 }
-//À CHANGÉ SI POSSIBLE
+
+
 function login(credentials, successCallBack, errorCallBack) {
+    console.log(credentials);
     $.ajax({
-        url: hostURL + "token",
+        url: hostURL + "token", // "token" va devenir l<information du token creer
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(credentials),
         success: (tokenInfo) => {
-            storeToken(tokenInfo);
+            StoreToken(tokenInfo);
             getUserInfo(tokenInfo.UserId, successCallBack, errorCallBack);
+        },
+        error: function (jqXHR) { errorCallBack(jqXHR.status) }
+    });
+}
+
+function logout(credentials, successCallBack, errorCallBack) {
+    console.log(credentials);
+    $.ajax({
+        url: hostURL + "token", // "token" va devenir l<information du token creer
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(credentials),
+        success: (tokenInfo) => {
+            DeleteToken();
+            successCallBack();
         },
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });

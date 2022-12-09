@@ -1,4 +1,3 @@
-+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -59,19 +58,23 @@
                 <span class="cmd fa fa-plus-square" id="newImageCmd" title="Ajouter un image"
                     data-toggle="tooltip"></span>
             </div>
+
+
             <div class="connectionPanel">
                 <div class="loggedUserAvatarContainer" id="loggedUserAvatarContainer"></div>
                 <div id="loggedUserName"></div>
-                <span class="cmd fa-sharp fa-solid fa-address-book" id="newAccountCmd" title="Mon Profil"
+                <span class="cmd fa-sharp fa-solid fa-address-book" id="editAccountCmd" title="Mon Profil"
                     data-toggle="tooltip"></span>
                 <span class="cmd fa fa-minus-square" id="newLogoutCmd" title="Se déconnecter"
                     data-toggle="tooltip"></span>
                 <div>
                     <span class="cmd fa-sharp fa-solid fa-arrow-up-from-bracket" id="newloginCmd" title="Se connecter"
                         data-toggle="tooltip"></span>
-                    <span class="cmd fa fa-registered" id="newRegisterCmd" title="Enregister"
+                    <span class="cmd fa fa-registered" id="newRegisterCmd" title="S'enregister"
                         data-toggle="tooltip"></span>
                 </div>
+
+
             </div>
         </div>
 
@@ -109,24 +112,56 @@
         </div>
     </div>
 
+
     <div>
         <div id="loginDlg">
             <form id="loginForm">
-                <label for="email_input" class="form-control" required>Email</label>
-                <input type="text" id="email_input" class="form-control" required>
+                <label for="loginEmail_input" class="form-control" required>Email</label>
+                <input type="text" id="loginEmail_input" class="form-control" required>
 
                 <label for="password_input">Password</label>
                 <input type="password" id="password_input" class="form-control" required>
             </form>
         </div>
+    </div>
 
-        <div id="ConfirmDeleteDlg">
-            <span id="confirmationMessage">Êtes-vous sûr de vouloir faire ça?</span>
-        </div>
-        <div id="errorDlg">
-            <span id="errorMessage">OH OH il y a un problème!</span>
+
+
+    <div>
+        <div id="verifyAccountDlg">
+            <form id="verifyForm">
+
+                <input type="hidden" id="Id_input" value="0">
+
+                <label for="code_input">Veuillez entrer le code qui vous a été envoyé par email </label>
+                <input type="password" id="code_input" class="form-control" required>
+            </form>
         </div>
     </div>
+
+
+    <div id="editAccountDlg">
+        <form id="editAccountForm">
+
+            <input type="hidden" id="editId_input" value="0">
+            <input type="hidden" id="editGUID_input" value="">
+
+
+            <label for="editName_input">Nom d'usager</label>
+            <input type="text" id="editName_input" class="form-control" required>
+
+            <label for="editEmail_input">Courriel</label>
+            <input type="email" id="editEmail_input" class="form-control" required>
+
+
+            <label for="avatar">avatar</label>
+            <div id='avatar' class='ImageUploader' defaultImage='images/No_Image.png' waitingImage='images/writing.gif'>
+            </div>
+            <div class="note">Cliquez-Déposez une image</div>
+        </form>
+    </div>
+
+
     <div>
         <div id="accountDlg">
             <form id="accountForm">
@@ -164,7 +199,11 @@
 
     </div>
 
-
+    <div id="logoutDlg">
+        <form id="logoutForm">
+            <div>Voulez-vous vous déconnectez?</div>
+        </form>
+    </div>
 
 
     <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
@@ -189,7 +228,7 @@
         let previousScrollPosition = 0;
         let appendMode = false;
 
-        $("#newAccountCmd").hide();
+        $("#editAccountCmd").hide();
         $("#newLogoutCmd").hide();
 
         init_UI();
@@ -364,7 +403,7 @@
             $("#description_input").val(image.Description);
             ImageUploader.setImage('image', image.OriginalURL);
         }
-        
+
 
 
         function newAccount() {
@@ -377,26 +416,20 @@
             $("#accountDlg").dialog('open');
         }
 
-        function editAccount(e) {
+        function editAccount(user) {
             holdCheckETag = true;
-            createMode = false;
-            GET_ID(e.target.getAttribute("accountid"), accountToForm, error);
+            //createMode = true;
+            accountToForm(user);
             holdCheckETag = true;
             ImageUploader.imageRequired('image', false);
-            $("#accountDlg").dialog('option', 'name', "Modification du compte");
-            $("#accountDlgOkBtn").text("Modifier");
-            $("#accountDlg").dialog('open');
+            $("#editAccountDlg").dialog('option', 'name', "Modification du compte");
+            $("#editAccountDlgOkBtn").text("Modifier");
+            $("#editAccountDlg").dialog('open');
         }
+
         function deleteAccount(e) {
             holdCheckETag = true;
-            accoumtIdToDelete = e.target.getAttribute("accountid")
-            GET_ID(
-                accountIdToDelete,
-                account => {
-                    $("#deleteAccountConfirmationMessage").html("Voulez-vous vraiment supprimez le compte <br><b>" + account.Name + "</b>?")
-                },
-                error
-            );
+            //accountIdToDelete = e.Id;
             holdCheckETag = true;
             $("#confirmDlg").dialog('option', 'title', "Retrait d'image'...");
             $("#confirmDeleteDlgOkBtn").text("Effacer");
@@ -416,9 +449,9 @@
                 let account = {
                     Id: parseInt($("#Id_input").val()),
                     Name: $("#name_input").val(),
-                    Email: $("email_input").val(),
-                    Password: $("mdp_input").val(),
-                    AvatarGUID: $("GUID_input").val()
+                    Email: $("#email_input").val(),
+                    Password: $("#mdp_input").val(),
+                    AvatarGUID: $("#GUID_input").val()
                 };
                 return account;
             } else {
@@ -427,38 +460,51 @@
             return false;
         }
         function accountToForm(account) {
-            $("#Id_input").val(account.Id);
-            $("#GUID_input").val(account.AvatarGUID);
+            $("#editId_input").val(account.Id);
+            $("#editName_input").val(account.Name);
+            $("#editEmail_input").val(account.Email);
+            $("#editGUID_input").val(account.AvatarGUID);
+
+            /*
             $("")
 
             //$("#date_input").val(Date.now());
             $("#title_input").val(image.Title);
             $("#description_input").val(image.Description);
             ImageUploader.setImage('image', image.OriginalURL);
+            */
         }
+
+
         //C'est l'ouverture du dlg pour se connecter
         function signIn() {
             holdCheckETag = true;
-            createMode = true;
             $("#loginDlg").dialog('option', 'title', "Se connecter");
             $("#loginDlgOkBtn").text("Connexion");
             $("#loginDlg").dialog('open');
         }
+
         //idem, mais pour se déconnecter
-        function signOut(){
+        function signOut() {
             holdCheckETag = true;
-            createMode = true;
+            //createMode = true;
             $("#logoutDlg").dialog('option', 'title', "Se connecter");
-            $("#logoutDlgOkBtn").text("Connexion");
+            $("#logoutDlgOkBtn").text("Se déconnecter");
             $("#logoutDlg").dialog('open');
         }
         //ça ouvre la page la dlg de confirmation
-        function updateRegister(){
-            
+        function updateRegister() {
+            holdCheckETag = true;
+            registerMode = true;
+            $("#verifyAccountDlg").dialog('open');
+            //console.log("it works")
+        }
+        function setUserLocalstorage(user) {
+            localStorage.setItem("user", user);
         }
         //ça permet à la connection automatique
-        function updateConfirmation(){
-        
+        function updateConfirmation() {
+
         }
         //Ça vient changer le HTML pour faire comme si un compte est connecté
         function updateConnected() {
@@ -475,13 +521,27 @@
 
             $("#newloginCmd").hide();
             $("#newRegisterCmd").hide();
-            $("#newAccountCmd").show();
+            $("#editAccountCmd").show();//modifier le compte , donc devoir changer le nom
             $("#newLogoutCmd").show();
             getImagesList();
         }
         //Ça vient rechanger le HTML pour faire en sorte que la page revienne comme avant(non connecté) (Le token va jouer un grand rôle la-dessus)
-        function updateDisconnect(){
-            
+        function updateDisconnect() {
+            let profil = JSON.parse(localStorage.getItem('user'));
+            var userToRemove = profil.Id;
+
+            $('#loggedUserAvatarContainer').empty();
+            $("#loggedUserName").text('');
+
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+            console.log(profil);
+
+            $("#newloginCmd").show();
+            $("#newRegisterCmd").show();
+
+            $("#editAccountCmd").hide();//modifier le compte , donc devoir changer le nom
+            $("#newLogoutCmd").hide();
         }
         //On récupère les infos de l'utilisateur.
         function retrieveUserInfo() {
@@ -489,24 +549,30 @@
         }
         //C'est relié au Login en retrivant l'email et le password
         function retrieveCredentials() {
-            return { Email: $("#email_input").val(), Password: $("#password_input").val() }
+            let user = { Email: $("#loginEmail_input").val(), Password: $("#password_input").val() };
+            return user;
         }
         //Ça correspond à la vérification du code fournis par le courriel automatisé
-        function showEmailVerificationDlg(user){
-            
+        function showEmailVerificationDlg(user) {
+
         }
         //Ça correspond à la vérification du code fournis par le courriel automatisé, ici on retourne le verifyUser
-        function verifyCodeFromForm(){
-            
+        // Si user dejà créer mais pas vérif
+        function verifyCodeFromForm() {
+            let user = localStorage.getItem("user");
+            let VerifyUser = {
+                Id: user.Id,
+                VerifyCode: $("#code_input").val()
+            }
+            return VerifyUser;
         }
         //c'est pour l'ouverture du dialogue pour l'enregistrement
-        function registerIn(){
+        function registerIn() {
 
         }
         //Ici on rajoute les autres Dlg qu'on a créé dans cette fonction (Suivre les autres exemples dans la fonction)
         function init_UI() {
             $("#newImageCmd").click(newImage)
-
             $("#imageDlg").dialog({
                 title: "...",
                 autoOpen: false,
@@ -527,11 +593,11 @@
                         let image = imageFromForm();
                         if (image) {
                             if (createMode) {
-                                POST(image, getImagesList, error);
+                                PostImage(image, getImagesList, error);
                                 $(".scrollContainer").scrollTop(0);
                             }
                             else
-                                PUT(image, getImagesList, error);
+                                PutImage(image, getImagesList, error);
                             resetimageForm();
                             holdCheckETag = false;
                             $(this).dialog("close");
@@ -548,7 +614,43 @@
             });
 
 
-            $("#newLoginCmd").click(signIn)
+            $("#newRegisterCmd").click(newAccount)
+            $("#accountDlg").dialog({
+                title: "...",
+                autoOpen: false,
+                modal: true,
+                show: { effect: 'fade', speed: 400 },
+                hide: { effect: 'fade', speed: 400 },
+                width: 640,
+                minWidth: 640,
+                maxWidth: 640,
+                height: 780,
+                minHeight: 780,
+                maxHeight: 780,
+                position: { my: "top", at: "top", of: window },
+                buttons: [{
+                    id: "accoutDlgOkBtn",
+                    text: "s'enregistrer",
+                    click: function () {
+                        let user = accountFromForm();
+                        PostUser(user, setUserLocalstorage, error);
+                        $(this).dialog("close");
+                        updateRegister();
+                        //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
+                    }
+                },
+                {
+                    text: "Annuler",
+                    click: function () {
+                        holdCheckETag = false;
+                        $(this).dialog("close");
+                    }
+                }]
+            })
+
+
+
+            $("#newloginCmd").click(signIn)
             $("#loginDlg").dialog({
                 title: "...",
                 autoOpen: false,
@@ -566,7 +668,8 @@
                     id: "loginDlgOkBtn",
                     text: "login",
                     click: function () {
-                        login(retrieveCredentials(), updateConnected, error);
+                        let user = retrieveCredentials();
+                        login(user, updateConnected, error);
                         $(this).dialog("close");
                     }
                 },
@@ -578,7 +681,112 @@
                     }
                 }]
             });
+
+
+            $("#editAccountCmd").click(function () { editAccount(JSON.parse(localStorage.getItem("user")))});
+            $("#editAccountDlg").dialog({
+                title: "...",
+                autoOpen: false,
+                modal: true,
+                show: { effect: 'fade', speed: 400 },
+                hide: { effect: 'fade', speed: 400 },
+                width: 640,
+                minWidth: 640,
+                maxWidth: 640,
+                height: 780,
+                minHeight: 780,
+                maxHeight: 780,
+                position: { my: "top", at: "top", of: window },
+                buttons: [{
+                    id: "editAccountDlgOkBtn",
+                    text: "modifier",
+                    click: function () {
+                        let user = accountFromForm();
+                        Modify(user, setUserLocalstorage, error);
+                        $(this).dialog("close");
+                        updateRegister();
+                        //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
+                    }
+                },
+                {
+                    text: "Annuler",
+                    click: function () {
+                        holdCheckETag = false;
+                        $(this).dialog("close");
+                    }
+                }]
+            })
+
+
+            //$("#VerifyAccountCmd").click(signIn)
+            $("#verifyAccountDlg").dialog({
+                title: "...",
+                autoOpen: false,
+                modal: true,
+                show: { effect: 'fade', speed: 400 },
+                hide: { effect: 'fade', speed: 400 },
+                width: 640,
+                minWidth: 640,
+                maxWidth: 640,
+                height: 780,
+                minHeight: 780,
+                maxHeight: 780,
+                position: { my: "top", at: "top", of: window },
+                buttons: [{
+                    id: "verifyDlgOkBtn",
+                    text: "verify",
+                    click: function () {
+                        let user = localStorage.getItem("user");
+                        let code = $("#code_input").val();
+                        if (registerMode) {
+                            let data = { "Id": user, "VerifyCode": code };
+                            verifyUser(data, setUserLocalstorage, updateRegister);
+                        }
+                        $(this).dialog("close");
+                    }
+                },
+                {
+                    text: "Annuler",
+                    click: function () {
+                        holdCheckETag = false;
+                        $(this).dialog("close");
+                    }
+                }]
+            });
+
+
             $("#newLogoutCmd").click(signOut)
+            $("#logoutDlg").dialog({
+                title: "...",
+                autoOpen: false,
+                modal: true,
+                show: { effect: 'fade', speed: 400 },
+                hide: { effect: 'fade', speed: 400 },
+                width: 640,
+                minWidth: 640,
+                maxWidth: 640,
+                height: 780,
+                minHeight: 780,
+                maxHeight: 780,
+                position: { my: "top", at: "top", of: window },
+                buttons: [{
+                    id: "logoutDlgOkBtn",
+                    text: "se deconnecter",
+                    click: function () {
+                        let user = retrieveCredentials();
+                        logout(user, updateDisconnect, error);
+                        $(this).dialog("close");
+                    }
+                },
+                {
+                    text: "Annuler",
+                    click: function () {
+                        holdCheckETag = false;
+                        $(this).dialog("close");
+                    }
+                }]
+            });
+
 
             $("#confirmDeleteImageDlg").dialog({
                 title: "Attention!",
@@ -595,7 +803,7 @@
                     click: function () {
                         holdCheckETag = false;
                         if (imageIdToDelete)
-                            DELETE(imageIdToDelete, getImagesList, error);
+                            DeleteImage(imageIdToDelete, getImagesList, error);
                         imageIdToDelete = 0;
                         $(this).dialog("close");
                     }
@@ -609,6 +817,9 @@
                     }
                 }]
             });
+
+
+
 
             $("#confirmDeleteAccountDlg").dialog({
                 title: "Attention!",
@@ -625,7 +836,7 @@
                     click: function () {
                         holdCheckETag = false;
                         if (imageIdToDelete)
-                            DELETE(imageIdToDelete, getImagesList, error);
+                            deleteAccount(imageIdToDelete, getImagesList, error);
                         imageIdToDelete = 0;
                         $(this).dialog("close");
                     }
@@ -639,6 +850,9 @@
                     }
                 }]
             });
+
+
+
 
             $("#errorDlg").dialog({
                 title: "Erreur...",

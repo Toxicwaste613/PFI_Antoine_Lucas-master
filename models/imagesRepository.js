@@ -20,10 +20,46 @@ module.exports =
                     bindedImage["OriginalURL"] = "";
                     bindedImage["ThumbnailURL"] = "";
                 }
+                /*
+                let user = this.UsersRepository.get(bindedImage.UserId);
+                if (user) {
+                    bindedImage.User = user;
+                    bindedImage.Username = user.Name;
+                }
+                */
                 return bindedImage;
             }
             return null;
         }
+
+        getAll(params = null) {
+            let images = super.getAll(params);
+            let retain;
+            if (params != null && params.keywords != null) {
+                let imagesRetained = [];
+                let keywords = params.keywords.split(" ");
+                if (keywords.lenght > 0) {
+                    for (let image of images) {
+                        let text = (image.Title + image.Description).toLowerCase();
+                        retain = true;
+                        for (let keyword of keywords) {
+                            if (text.indexOf(keyword) < 0) {
+                                retain = false;
+                                break;
+                            }
+
+                        }
+                        if (retain) {
+                            imagesRetained.add(image);
+                        }
+                    }
+                }
+                return imagesRetained;
+            }
+            return images;
+
+        }
+
         add(image) {
             if (this.model.valid(image)) {
                 image["GUID"] = ImageFilesRepository.storeImageData("", image["ImageData"]);
