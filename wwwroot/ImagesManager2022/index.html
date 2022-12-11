@@ -101,6 +101,12 @@
                         waitingImage='images/writing.gif'>
                     </div>
                     <div class="note">Cliquez-Déposez une image</div>
+
+                    <input type="hidden" id="UserId_input" value="0">
+                    <label for="isShared_input">Shared</label>
+                    <input type="checkbox" id="isShared_input" name="Shared" value="true">
+
+
                 </form>
             </div>
             <div id="confirmDeleteImageDlg">
@@ -121,6 +127,10 @@
 
                 <label for="password_input">Password</label>
                 <input type="password" id="password_input" class="form-control" required>
+                <!--POUR LE MOMENT LE CHECKBOX NE FAIT RIEN-->
+                <label for="isChecked_input">
+                    <input type="checkbox" id="isChecked_input" name="Remember me" value="Remember me"> Remember me
+                </label>
             </form>
         </div>
     </div>
@@ -218,6 +228,7 @@
         let holdCheckETag = false;
         let currentETag = "";
         let createMode = true;
+        let registerMode = false;
         let searchCategory = "";
         let searchTitle = "";
         let hideSearchBar = true;
@@ -228,6 +239,7 @@
         let previousScrollPosition = 0;
         let appendMode = false;
 
+        $("#newImageCmd").hide();
         $("#editAccountCmd").hide();
         $("#newLogoutCmd").hide();
 
@@ -386,7 +398,9 @@
                     Title: $("#title_input").val(),
                     Description: $("#description_input").val(),
                     ImageData: ImageUploader.getImageData('image'),
-                    Date: parseInt($("#date_input").val())
+                    Date: parseInt($("#date_input").val()),
+                    UserId: sessionStorage.getItem('user').Id,
+                    Shared: $("#isShared_input").val()
                 };
                 return image;
             } else {
@@ -502,14 +516,24 @@
         function setUserLocalstorage(user) {
             localStorage.setItem("user", user);
         }
+        function setUserSessionStorage(user) {
+            sessionStorage.setItem("user", user);
+        }
         //ça permet à la connection automatique
         function updateConfirmation() {
 
         }
         //Ça vient changer le HTML pour faire comme si un compte est connecté
         function updateConnected() {
+            if ($('#isChecked_input').is(':checked')) {
+                let userLocal = retrieveCredentials();
+                setLocalstorage();
+            }
             //insertProfileInfomation();
             let userInfo = retrieveUserInfo();
+            //let userInfo = retrieveCredentials();
+            //setUserLocalstorage(userInfo);
+            //setUserSessionStorage(userInfo);
             console.log(userInfo)
             console.log(userInfo.Name)
             console.log(userInfo.Id)
@@ -521,20 +545,24 @@
 
             $("#newloginCmd").hide();
             $("#newRegisterCmd").hide();
+            $("#newImageCmd").show();
             $("#editAccountCmd").show();//modifier le compte , donc devoir changer le nom
             $("#newLogoutCmd").show();
             getImagesList();
         }
         //Ça vient rechanger le HTML pour faire en sorte que la page revienne comme avant(non connecté) (Le token va jouer un grand rôle la-dessus)
         function updateDisconnect() {
-            let profil = JSON.parse(localStorage.getItem('user'));
+            //let profil = JSON.parse(localStorage.getItem('user'));
+            let profil = JSON.parse(sessionStorage.getItem('user'));
             var userToRemove = profil.Id;
 
             $('#loggedUserAvatarContainer').empty();
             $("#loggedUserName").text('');
 
-            localStorage.removeItem("user");
-            localStorage.removeItem("token");
+            //localStorage.removeItem("user");
+            //localStorage.removeItem("token");
+            sessionStorage.removeItem("user");
+            //sessionStorage.removeItem("token");
             console.log(profil);
 
             $("#newloginCmd").show();
@@ -545,7 +573,8 @@
         }
         //On récupère les infos de l'utilisateur.
         function retrieveUserInfo() {
-            return JSON.parse(localStorage.getItem('user'));
+            //return JSON.parse(localStorage.getItem('user'));
+            return JSON.parse(sessionStorage.getItem('user'));
         }
         //C'est relié au Login en retrivant l'email et le password
         function retrieveCredentials() {
@@ -560,6 +589,7 @@
         // Si user dejà créer mais pas vérif
         function verifyCodeFromForm() {
             let user = localStorage.getItem("user");
+            //let user = sessionStorage.getItem("user");
             let VerifyUser = {
                 Id: user.Id,
                 VerifyCode: $("#code_input").val()
@@ -633,9 +663,10 @@
                     text: "s'enregistrer",
                     click: function () {
                         let user = accountFromForm();
-                        PostUser(user, setUserLocalstorage, error);
+                        //PostUser(user, setUserLocalstorage, updateRegister, error);
+                        PostUser(user, setUserSessionStorage, error);
                         $(this).dialog("close");
-                        updateRegister();
+                        //updateRegister();
                         //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
                     }
                 },
@@ -648,8 +679,6 @@
                 }]
             })
 
-
-
             $("#newloginCmd").click(signIn)
             $("#loginDlg").dialog({
                 title: "...",
@@ -660,9 +689,9 @@
                 width: 640,
                 minWidth: 640,
                 maxWidth: 640,
-                height: 780,
-                minHeight: 780,
-                maxHeight: 780,
+                height: 350,
+                minHeight: 350,
+                maxHeight: 350,
                 position: { my: "top", at: "top", of: window },
                 buttons: [{
                     id: "loginDlgOkBtn",
@@ -683,7 +712,7 @@
             });
 
 
-            $("#editAccountCmd").click(function () { editAccount(JSON.parse(localStorage.getItem("user")))});
+            $("#editAccountCmd").click(function () { editAccount(function () { retrieveUserInfo }) });
             $("#editAccountDlg").dialog({
                 title: "...",
                 autoOpen: false,
@@ -702,7 +731,8 @@
                     text: "modifier",
                     click: function () {
                         let user = accountFromForm();
-                        Modify(user, setUserLocalstorage, error);
+                        //Modify(user, setUserLocalstorage, error);
+                        Modify(user, setUserSessionStorage, error);
                         $(this).dialog("close");
                         updateRegister();
                         //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
@@ -728,9 +758,9 @@
                 width: 640,
                 minWidth: 640,
                 maxWidth: 640,
-                height: 780,
-                minHeight: 780,
-                maxHeight: 780,
+                height: 200,
+                minHeight: 200,
+                maxHeight: 200,
                 position: { my: "top", at: "top", of: window },
                 buttons: [{
                     id: "verifyDlgOkBtn",
@@ -741,6 +771,8 @@
                         if (registerMode) {
                             let data = { "Id": user, "VerifyCode": code };
                             verifyUser(data, setUserLocalstorage, updateRegister);
+                            //verifyUser(data, setUserSessionStorage, updateRegister);
+                            //verifyUser(data, signIn, updateRegister);
                         }
                         $(this).dialog("close");
                     }
@@ -773,7 +805,8 @@
                     id: "logoutDlgOkBtn",
                     text: "se deconnecter",
                     click: function () {
-                        let user = retrieveCredentials();
+                        //let user = retrieveCredentials();
+                        let user = retrieveUserInfo();
                         logout(user, updateDisconnect, error);
                         $(this).dialog("close");
                     }
@@ -818,9 +851,6 @@
                 }]
             });
 
-
-
-
             $("#confirmDeleteAccountDlg").dialog({
                 title: "Attention!",
                 autoOpen: false,
@@ -850,7 +880,6 @@
                     }
                 }]
             });
-
 
 
 

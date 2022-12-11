@@ -69,13 +69,14 @@ function DeleteImage(id, successCallBack, errorCallBack) {
 //-------------          USER      ------------------------------
 //---------------------------------------------------------------
 // POST: accounts/register body payload[{"Id": 0, "Name": "...", "Email": "...", "Password": "..."}]
-function PostUser(data, successCallBack, errorCallBack) {
+function PostUser(data, successCallBack1, successCallBack2, errorCallBack) {
+    console.log(data);
     $.ajax({
         url: hostURL + "accounts/register",
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(data),
-        success: (newData) => { successCallBack(newData.Id) },
+        success: (newData) => { successCallBack1(newData.Id), successCallBack2() },
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
@@ -110,7 +111,7 @@ function verifyUser(verifyUser, successCallBack, errorCallBack) {
         type: 'GET',
         contentType: 'application/json',
         data: JSON.stringify(verifyUser),
-        success: (verifyUser) => { StoreToken(verifyUser); successCallBack(verifyUser); },
+        success: (verifyUser) => { StoreToken(verifyUser); successCallBack(verifyUser); localStorage.removeItem("user") },
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
     });
 }
@@ -132,12 +133,14 @@ function editUser(user, successCallBack, errorCallBack) {
 //-------------          TOKEN     ------------------------------
 //---------------------------------------------------------------
 function DeleteToken() {
-    localStorage.removeItem('token');
+    //localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
 }
 
 
 function StoreToken(tokeninfo) {
-    localStorage.setItem('token', tokeninfo.Access_token);
+    //localStorage.setItem('token', tokeninfo.Access_token);
+    sessionStorage.setItem('token', tokeninfo.Access_token);
 }
 
 
@@ -148,7 +151,8 @@ function getUserInfo(userId, successCallBack, errorCallBack) {
         url: hostURL + "accounts/index/" + userId,
         type: 'GET',
         success: (userInfo) => {
-            localStorage.setItem('user', JSON.stringify(userInfo));
+            //localStorage.setItem('user', JSON.stringify(userInfo));
+            sessionStorage.setItem('user', JSON.stringify(userInfo));
             successCallBack();
         },
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
@@ -175,11 +179,11 @@ function logout(credentials, successCallBack, errorCallBack) {
     console.log(credentials);
     $.ajax({
         url: hostURL + "token", // "token" va devenir l<information du token creer
-        type: 'POST',
+        type: 'REMOVE',
         contentType: 'application/json',
         data: JSON.stringify(credentials),
         success: (tokenInfo) => {
-            DeleteToken();
+            DeleteToken(tokenInfo);
             successCallBack();
         },
         error: function (jqXHR) { errorCallBack(jqXHR.status) }
