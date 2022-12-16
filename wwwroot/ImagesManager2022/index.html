@@ -184,10 +184,10 @@
                 <input type="email" id="email_input" class="form-control" required>
 
                 <label for="mdp_input">Mot de passe</label>
-                <input type="text" id="mdp_input" class="form-control">
+                <input type="password" id="mdp_input" class="form-control" matchedPasswordId="mdpVerif_input">
 
                 <label for="mdpVerif_input">Confirmer mot de passe</label>
-                <input type="text" id="mdpVerif_input" class="form-control">
+                <input type="password" id="mdpVerif_input" class="form-control">
 
                 <label for="avatar">avatar</label>
                 <div id='avatar' class='ImageUploader' defaultImage='images/No_Image.png'
@@ -230,6 +230,7 @@
         let searchTitle = "";
         let hideSearchBar = true;
         let imageIdToDelete = 0; // used by confirmDeleteDlg
+        let accountIdToDelete = 0;
         let selectedCategory = "";
         let imagesCount = 50;
         let appendCount = 3;
@@ -465,17 +466,18 @@
 
         function newAccount() {
             holdCheckETag = true;
-            newAccountBool = true;
+            registerMode = true;
             resetAccountForm();
             ImageUploader.imageRequired('avatar', true);
-            $("#accountDlg").dialog('option', 'name', "Votre compte");
-            $("#accountDlgOkBtn").text("Ajouter");
+            $("#accountDlg").dialog('option', 'title', "creer un compte");
+            $("#accountDlgOkBtn").text("S'enregistrer");
             $("#accountDlg").dialog('open');
+            $("#deleteAccountBtn").hide();
         }
 
         function editAccount() {
             holdCheckETag = true;
-            newAccountBool = false;
+            registerMode = false;
             //GET_ID_USER(user /* getAttribute("imageid")*/, accountToForm(user), error);
             accountToForm(retrieveUserInfo());
             holdCheckETag = true;
@@ -483,14 +485,15 @@
             $("#accountDlg").dialog('option', 'title', "Modification de compte");
             $("#accountDlgOkBtn").text("Modifier");
             $("#accountDlg").dialog('open');
+            $("#deleteAccountBtn").show();
         }
 
         function deleteAccount(e) {
             holdCheckETag = true;
             //accountIdToDelete = e.Id;
-            holdCheckETag = true;
+            //holdCheckETag = true;
             $("#confirmDlg").dialog('option', 'title', "Retrait d'image'...");
-            $("#confirmDeleteDlgOkBtn").text("Effacer");
+            $("#confirmDeleteAccountDlgOkBtn").text("Effacer");
             $("#confirmDeleteAccountDlg").dialog('open');
         }
         function resetAccountForm() {
@@ -710,6 +713,7 @@
             });
 
 
+            $("#editAccountCmd").click(editAccount);
             $("#newRegisterCmd").click(newAccount)
             $("#accountDlg").dialog({
                 title: "...",
@@ -726,15 +730,37 @@
                 position: { my: "top", at: "top", of: window },
                 buttons: [{
                     id: "accoutDlgOkBtn",
-                    text: "s'enregistrer",
+                    text: "S'enregistrer",
                     click: function () {
                         let user = accountFromForm();
-                        //PostUser(user, setUserLocalstorage, updateRegister, error);
-                        PostUser(user, setUserSessionStorage, error);
-                        $(this).dialog("close");
-                        updateRegister();
-                        //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
+                        if (user) {
+                            if (registerMode) {
+                                PostUser(user, setUserSessionStorage, error);
+                                updateRegister();
+                            }
+                            else {
+                                setUserSessionStorage(user);
+                                editUser(user, updateConnected, error);
+                            }
+
+                            holdCheckETag = false;
+                            $(this).dialog("close");
+                        }
                     }
+                    /*
+                    text: "s'enregistrer",
+                    click: function () {
+                        if (newAccountBool) {
+                            let user = accountFromForm();
+                            //PostUser(user, setUserLocalstorage, updateRegister, error);
+                            PostUser(user, setUserSessionStorage, error);
+                            $(this).dialog("close");
+                            updateRegister();
+                            //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
+                        }
+
+                    }
+                    */
                 },
                 {
                     text: "Annuler",
@@ -745,42 +771,12 @@
                 }]
             })
 
-            $("#newloginCmd").click(signIn)
-            $("#loginDlg").dialog({
-                title: "...",
-                autoOpen: false,
-                modal: true,
-                show: { effect: 'fade', speed: 400 },
-                hide: { effect: 'fade', speed: 400 },
-                width: 640,
-                minWidth: 640,
-                maxWidth: 640,
-                height: 350,
-                minHeight: 350,
-                maxHeight: 350,
-                position: { my: "top", at: "top", of: window },
-                buttons: [{
-                    id: "loginDlgOkBtn",
-                    text: "login",
-                    click: function () {
-                        let user = retrieveCredentials();
-                        login(user, updateConnected, error);
-                        $(this).dialog("close");
-                    }
-                },
-                {
-                    text: "Annuler",
-                    click: function () {
-                        holdCheckETag = false;
-                        $(this).dialog("close");
-                    }
-                }]
-            });
 
 
-            $("#editAccountCmd").click(editAccount);
-            $("#accountDlg").dialog({
-                title: "...",
+
+            /*
+            $("#accountEditDlg").dialog({
+                title: "Modifier profil",
                 autoOpen: false,
                 modal: true,
                 show: { effect: 'fade', speed: 400 },
@@ -819,9 +815,7 @@
                             $(this).dialogue("close");
                         }
                     }
-
                 },
-
                 {
 
                     text: "Annuler",
@@ -833,6 +827,106 @@
                 }]
             });
 
+*/
+
+            $("#newloginCmd").click(signIn)
+            $("#loginDlg").dialog({
+                title: "...",
+                autoOpen: false,
+                modal: true,
+                show: { effect: 'fade', speed: 400 },
+                hide: { effect: 'fade', speed: 400 },
+                width: 640,
+                minWidth: 640,
+                maxWidth: 640,
+                height: 350,
+                minHeight: 350,
+                maxHeight: 350,
+                position: { my: "top", at: "top", of: window },
+                buttons: [{
+                    id: "loginDlgOkBtn",
+                    text: "login",
+                    click: function () {
+                        let user = retrieveCredentials();
+                        login(user, updateConnected, error);
+                        $(this).dialog("close");
+                    }
+                },
+                {
+                    text: "Annuler",
+                    click: function () {
+                        holdCheckETag = false;
+                        $(this).dialog("close");
+                    }
+                }]
+            });
+
+
+
+            $("#editAccountCmd").click(editAccount);
+            /*
+            $("#accountDlg").dialog({
+                title: "...",
+                autoOpen: false,
+                modal: true,
+                show: { effect: 'fade', speed: 400 },
+                hide: { effect: 'fade', speed: 400 },
+                width: 640,
+                minWidth: 640,
+                maxWidth: 640,
+                height: 780,
+                minHeight: 780,
+                maxHeight: 780,
+                position: { my: "top", at: "top", of: window },
+                buttons: [{
+                    id: "editAccoutDlgOkBtn",
+                    text: "modifier",
+                    click: function () {
+                        //let user = retrieveUserInfo();
+                        let user = accountFromForm();
+                        if (user) {
+
+                            setUserSessionStorage(user);
+                            editUser(user, updateConnected, error);
+
+                            //Modify(user, setUserLocalstorage, error);
+
+                            $(this).dialog("close");
+                            //updateRegister();
+                            //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
+
+
+                        }
+                    }
+                },
+                {
+                    id: "deleteAccountBtn",
+                    text: "Supprimer le compte",
+                    click: function () {
+                        /*let user = accountFromForm();
+                        if (user) {
+                            DeleteUser(user, deleteAccount, error);
+                            $(this).dialogue("close");
+                        }*/
+            /*
+            deleteAccount();
+            holdCheckETag = false;
+            $(this).dialog("close");
+        }
+
+    },
+
+    {
+
+        text: "Annuler",
+        click: function () {
+            holdCheckETag = false;
+            $(this).dialog("close");
+        }
+
+    }]
+});
+*/
 
             //$("#VerifyAccountCmd").click(signIn)
             $("#verifyAccountDlg").dialog({
@@ -951,9 +1045,9 @@
                     text: "Oui",
                     click: function () {
                         holdCheckETag = false;
-                        if (imageIdToDelete)
-                            deleteAccount(imageIdToDelete, getImagesList, error);
-                        imageIdToDelete = 0;
+                        if (accountIdToDelete)
+                            deleteAccount(accountIdToDelete, updateDisconnect, error);
+                        accountIdToDelete = 0;
                         $(this).dialog("close");
                     }
                 },
@@ -961,7 +1055,7 @@
                     text: "Annuler",
                     click: function () {
                         holdCheckETag = false;
-                        imageIdToDelete = 0;
+                        accountIdToDelete = 0;
                         $(this).dialog("close");
                     }
                 }]
