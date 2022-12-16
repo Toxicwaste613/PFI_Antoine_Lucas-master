@@ -99,9 +99,9 @@
         <div>
             <div id="imageDlg">
                 <form id="imageForm">
-                    <input type="hidden" id="Id_input" value="0">
+                    <input type="hidden" id="imageId_input" value="0">
                     <input type="hidden" id="date_input" value="0">
-                    <input type="hidden" id="GUID_input" value="">
+                    <input type="hidden" id="imageGUID_input" value="">
 
                     <label for="title_input">Titre</label>
                     <input type="text" id="title_input" class="form-control" required>
@@ -156,7 +156,7 @@
         <div id="verifyAccountDlg">
             <form id="verifyForm">
 
-                <input type="hidden" id="Id_input" value="0">
+                <input type="hidden" id="verifyId_input" value="0">
 
                 <label for="code_input">Veuillez entrer le code qui vous a été envoyé par email </label>
                 <input type="password" id="code_input" class="form-control" required>
@@ -172,8 +172,8 @@
         <div id="accountDlg">
             <form id="accountForm">
 
-                <input type="hidden" id="Id_input" value="0">
-                <input type="hidden" id="GUID_input" value="">
+                <input type="hidden" id="userId_input" value="0">
+                <input type="hidden" id="userGUID_input" value="">
                 <input type="hidden" id="avatarUrl_input" value="">
 
 
@@ -423,8 +423,8 @@
             $("#confirmDeleteImageDlg").dialog('open');
         }
         function resetimageForm() {
-            $("#Id_input").val("0");
-            $("#GUID_input").val("");
+            $("#imageId_input").val("0");
+            $("#imageGUID_input").val("");
             $("#date_input").val(Date.now());
             $("#title_input").val("");
             $("#description_input").val("");
@@ -437,8 +437,8 @@
                 let user = JSON.parse(sessionStorage.getItem("user"));
 
                 let image = {
-                    Id: parseInt($("#Id_input").val()),
-                    GUID: $("#GUID_input").val(),
+                    Id: parseInt($("#imageId_input").val()),
+                    GUID: $("#imageGUID_input").val(),
                     Title: $("#title_input").val(),
                     Description: $("#description_input").val(),
                     ImageData: ImageUploader.getImageData('image'),
@@ -453,8 +453,8 @@
             return false;
         }
         function imageToForm(image) {
-            $("#Id_input").val(image.Id);
-            $("#GUID_input").val(image.GUID);
+            $("#imageId_input").val(image.Id);
+            $("#imageGUID_input").val(image.GUID);
             $("#date_input").val(image.Date);
             //$("#date_input").val(Date.now());
             $("#title_input").val(image.Title);
@@ -497,8 +497,8 @@
             $("#confirmDeleteAccountDlg").dialog('open');
         }
         function resetAccountForm() {
-            $("#Id_input").val("0");
-            $("#GUID_input").val("");
+            $("#userId_input").val("0");
+            $("#userGUID_input").val("");
             $("#avatarUrl_input").val("");
             $("#name_input").val("");
             $("#email_input").val("");
@@ -509,11 +509,11 @@
         function accountFromForm() {
             if ($("#accountForm")[0].checkValidity()) {
                 let account = {
-                    Id: parseInt($("#Id_input").val()),
+                    Id: parseInt($("#userId_input").val()),
                     Name: $("#name_input").val(),
                     Email: $("#email_input").val(),
                     Password: $("#mdp_input").val(),
-                    AvatarGUID: $("#GUID_input").val(),
+                    AvatarGUID: $("#userGUID_input").val(),
                     ImageData: ImageUploader.getImageData("avatar"),
                     AvatarURL: $("#avatarUrl_input").val()
                 };
@@ -524,10 +524,10 @@
             return false;
         }
         function accountToForm(account) {
-            $("#Id_input").val(account.Id);
+            $("#userId_input").val(account.Id);
             $("#name_input").val(account.Name);
             $("#email_input").val(account.Email);
-            $("#GUID_input").val(account.AvatarGUID);
+            $("#userGUID_input").val(account.AvatarGUID);
             ImageUploader.setImageData('avatar', account.AvatarURL);
             $("#avatarUrl_input").val(account.AvatarURL);
 
