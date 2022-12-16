@@ -1,5 +1,5 @@
 const apiBaseURL = "http://localhost:5000/api/images";
-const hostURL = "http://localhost:5000/";
+const hostURL = "https://pfi-antoine-lucas.glitch.me/";
 
 function HEAD(successCallBack, errorCallBack) {
     $.ajax({
