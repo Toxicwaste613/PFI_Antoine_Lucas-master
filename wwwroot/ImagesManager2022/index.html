@@ -483,7 +483,7 @@
             holdCheckETag = true;
             ImageUploader.imageRequired('avatar', false);
             $("#accountDlg").dialog('option', 'title', "Modification de compte");
-            $("#accountDlgOkBtn").text("Modifier");
+            $("#accoutDlgOkBtn").text("Modifier");
             $("#accountDlg").dialog('open');
             $("#deleteAccountBtn").show();
         }
@@ -762,6 +762,16 @@
                     }
                     */
                 },
+
+                {
+                    id: "deleteAccountBtn",
+                    text: "Supprimer le compte",
+                    click: function () {
+
+                        DeleteUser(user, deleteAccount, error);
+                    }
+                },
+
                 {
                     text: "Annuler",
                     click: function () {
@@ -797,9 +807,9 @@
                         if (user) {
                             setUserSessionStorage(user);
                             editUser(user, updateConnected, error);
-
+    
                             //Modify(user, setUserLocalstorage, error);
-
+    
                             $(this).dialog("close");
                             //updateRegister();
                             //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
@@ -817,17 +827,17 @@
                     }
                 },
                 {
-
+    
                     text: "Annuler",
                     click: function () {
                         holdCheckETag = false;
                         $(this).dialog("close");
                     }
-
+    
                 }]
             });
-
-*/
+    
+    */
 
             $("#newloginCmd").click(signIn)
             $("#loginDlg").dialog({
@@ -885,17 +895,17 @@
                         //let user = retrieveUserInfo();
                         let user = accountFromForm();
                         if (user) {
-
+    
                             setUserSessionStorage(user);
                             editUser(user, updateConnected, error);
-
+    
                             //Modify(user, setUserLocalstorage, error);
-
+    
                             $(this).dialog("close");
                             //updateRegister();
                             //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
-
-
+    
+    
                         }
                     }
                 },
@@ -913,20 +923,20 @@
             holdCheckETag = false;
             $(this).dialog("close");
         }
-
+    
     },
-
+    
     {
-
+    
         text: "Annuler",
         click: function () {
             holdCheckETag = false;
             $(this).dialog("close");
         }
-
+    
     }]
-});
-*/
+    });
+    */
 
             //$("#VerifyAccountCmd").click(signIn)
             $("#verifyAccountDlg").dialog({
