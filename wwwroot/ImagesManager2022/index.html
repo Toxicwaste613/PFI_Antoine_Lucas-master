@@ -654,7 +654,7 @@
         //Ça correspond à la vérification du code fournis par le courriel automatisé, ici on retourne le verifyUser
         // Si user dejà créer mais pas vérif
         function verifyCodeFromForm() {
-            let user = localStorage.getItem("user");
+            let user = JSON.parse(localStorage.getItem("user"));
             //let user = sessionStorage.getItem("user");
             let VerifyUser = {
                 Id: user.Id,
@@ -811,6 +811,18 @@
                     }
                 },
                 {
+                    text: "Supprimer le compte",
+                    click: function () {
+                        let user = accountFromForm();
+                        if (user) {
+                            DeleteUser(user, deleteAccount, error);
+                            $(this).dialogue("close");
+                        }
+                    }
+
+                },
+
+                {
 
                     text: "Annuler",
                     click: function () {
@@ -840,7 +852,7 @@
                     id: "verifyDlgOkBtn",
                     text: "verify",
                     click: function () {
-                        let user = sessionStorage.getItem("user");
+                        let user = JSON.parse(sessionStorage.getItem("user"));
                         let code = $("#code_input").val();
                         if (registerMode) {
                             let data = { "Id": user, "VerifyCode": code };
