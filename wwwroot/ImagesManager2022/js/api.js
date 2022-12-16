@@ -1,4 +1,4 @@
-const apiBaseURL = "http://localhost:5000/api/images";
+const apiBaseURL = "https://pfi-antoine-lucas.glitch.me/api/images";
 const hostURL = "https://pfi-antoine-lucas.glitch.me/";
 
 function HEAD(successCallBack, errorCallBack) {
