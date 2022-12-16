@@ -2,6 +2,7 @@ const ImageFilesRepository = require('./imageFilesRepository.js');
 const UsersRepository = require('./usersRepository');
 const ImageModel = require('./image.js');
 const utilities = require("../utilities");
+const User = require('./user.js');
 const HttpContext = require('../httpContext').get();
 
 module.exports =
@@ -20,6 +21,11 @@ module.exports =
                     bindedImage["OriginalURL"] = "";
                     bindedImage["ThumbnailURL"] = "";
                 }
+
+                let usersRepository = new UsersRepository();
+                let user = HttpContext.host + usersRepository.get(image["UserId"]);
+                bindedImage["AvatarGUID"] = user;
+
                 /*
                 let user = this.UsersRepository.get(bindedImage.UserId);
                 if (user) {
@@ -27,6 +33,7 @@ module.exports =
                     bindedImage.Username = user.Name;
                 }
                 */
+
                 return bindedImage;
             }
             return null;

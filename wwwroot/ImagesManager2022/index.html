@@ -78,6 +78,19 @@
             </div>
         </div>
 
+
+        <div id="searchImages">
+            <div>
+                <label for="users">Search by users</label>
+                <select name="users" id="searchByUser">
+                    <!-- create the options via code-->
+                </select>
+
+            </div>
+        </div>
+
+
+
         <div class="scrollContainer">
             <div id="imagesList">
                 <!-- filled programmatically-->
@@ -119,6 +132,8 @@
     </div>
 
 
+
+
     <div>
         <div id="loginDlg">
             <form id="loginForm">
@@ -150,26 +165,7 @@
     </div>
 
 
-    <div id="editAccountDlg">
-        <form id="editAccountForm">
 
-            <input type="hidden" id="editId_input" value="0">
-            <input type="hidden" id="editGUID_input" value="">
-
-
-            <label for="editName_input">Nom d'usager</label>
-            <input type="text" id="editName_input" class="form-control" required>
-
-            <label for="editEmail_input">Courriel</label>
-            <input type="email" id="editEmail_input" class="form-control" required>
-
-
-            <label for="avatar">avatar</label>
-            <div id='avatar' class='ImageUploader' defaultImage='images/No_Image.png' waitingImage='images/writing.gif'>
-            </div>
-            <div class="note">Cliquez-Déposez une image</div>
-        </form>
-    </div>
 
 
     <div>
@@ -178,6 +174,7 @@
 
                 <input type="hidden" id="Id_input" value="0">
                 <input type="hidden" id="GUID_input" value="">
+                <input type="hidden" id="avatarUrl_input" value="">
 
 
                 <label for="name_input">Nom d'usager</label>
@@ -187,10 +184,10 @@
                 <input type="email" id="email_input" class="form-control" required>
 
                 <label for="mdp_input">Mot de passe</label>
-                <input type="text" id="mdp_input" class="form-control" required>
+                <input type="text" id="mdp_input" class="form-control">
 
                 <label for="mdpVerif_input">Confirmer mot de passe</label>
-                <input type="text" id="mdpVerif_input" class="form-control" required>
+                <input type="text" id="mdpVerif_input" class="form-control">
 
                 <label for="avatar">avatar</label>
                 <div id='avatar' class='ImageUploader' defaultImage='images/No_Image.png'
@@ -238,6 +235,7 @@
         let appendCount = 3;
         let previousScrollPosition = 0;
         let appendMode = false;
+        let newAccountBool = false;
 
         $("#newImageCmd").hide();
         $("#editAccountCmd").hide();
@@ -266,8 +264,10 @@
                 }
                 return queryString;
             }
-            GET_ALL(refreshimagesList, error, prepareQueryString());
+            GET_ALL_IMAGES(refreshimagesList, error, prepareQueryString());
         }
+
+
         function refreshimagesList(images, ETag) {
             function insertIntoImageList(image) {
 
@@ -290,6 +290,10 @@
                                     <a href="${image.OriginalURL}" target="_blank">
                                         <div    class='image' 
                                                 style="background-image:url('${image.ThumbnailURL}')">
+                                                <div    class='avatar' 
+                                                style="background-image:url('${image.AvatarGUID}')">
+                                                
+                                        </div>
                                         </div>
                                     </a>
                                     <div class="imageDate">${convertToFrenchDate(parseInt(image.Date))}</div>
@@ -317,6 +321,41 @@
 
             $('[data-toggle="tooltip"]').tooltip();
         }
+
+
+        function getUsersList(refresh = true) {
+            appendMode = !refresh;
+            function prepareQueryString() {
+                let queryString = "";
+                if (appendMode) {
+                    queryString = `?sort=Created,desc`;
+                } else {
+                    queryString = `?sort=Created,desc`;
+                }
+                return queryString;
+            }
+            GET_ALL_USERS(refreshUserOptionList, error, prepareQueryString());
+        }
+
+
+        function refreshUserOptionList(users, ETag) {
+            function insertIntoUsersList(users) {
+
+                $("#searchByUser").append(
+                    $(` 
+
+                                <option value="${users.id}">${users.Name}</option>
+                        `)
+                );
+            }
+            currentETag = ETag;
+
+            for (let user of users) {
+                insertIntoUsersList(user);
+            }
+        }
+
+
 
         function error(status) {
             let errorMessage = "";
@@ -360,7 +399,7 @@
         function editimage(e) {
             holdCheckETag = true;
             createMode = false;
-            GET_ID(e.target.getAttribute("imageid"), imageToForm, error);
+            GET_ID_IMAGE(e.target.getAttribute("imageid"), imageToForm, error);
             holdCheckETag = true;
             ImageUploader.imageRequired('image', false);
             $("#imageDlg").dialog('option', 'title', "Modification d'image");
@@ -370,7 +409,7 @@
         function deleteimage(e) {
             holdCheckETag = true;
             imageIdToDelete = e.target.getAttribute("imageid")
-            GET_ID(
+            GET_ID_IMAGE(
                 imageIdToDelete,
                 image => {
                     $("#deleteImageConfirmationMessage").html("Voulez-vous vraiment effacer l'image <br><b>" + image.Title + "</b>?")
@@ -388,10 +427,14 @@
             $("#date_input").val(Date.now());
             $("#title_input").val("");
             $("#description_input").val("");
+            $("#UserId_input").val("0");
+            $("#isShared_input").prop("unchecked");
             ImageUploader.resetImage('image');
         }
         function imageFromForm() {
             if ($("#imageForm")[0].checkValidity()) {
+                let user = JSON.parse(sessionStorage.getItem("user"));
+
                 let image = {
                     Id: parseInt($("#Id_input").val()),
                     GUID: $("#GUID_input").val(),
@@ -399,8 +442,8 @@
                     Description: $("#description_input").val(),
                     ImageData: ImageUploader.getImageData('image'),
                     Date: parseInt($("#date_input").val()),
-                    UserId: sessionStorage.getItem('user').Id,
-                    Shared: $("#isShared_input").val()
+                    UserId: user.Id,
+                    Shared: $("#isShared_input").prop("checked")
                 };
                 return image;
             } else {
@@ -422,23 +465,24 @@
 
         function newAccount() {
             holdCheckETag = true;
-            createMode = true;
+            newAccountBool = true;
             resetAccountForm();
-            ImageUploader.imageRequired('image', true);
+            ImageUploader.imageRequired('avatar', true);
             $("#accountDlg").dialog('option', 'name', "Votre compte");
             $("#accountDlgOkBtn").text("Ajouter");
             $("#accountDlg").dialog('open');
         }
 
-        function editAccount(user) {
+        function editAccount() {
             holdCheckETag = true;
-            //createMode = true;
-            accountToForm(user);
+            newAccountBool = false;
+            //GET_ID_USER(user /* getAttribute("imageid")*/, accountToForm(user), error);
+            accountToForm(retrieveUserInfo());
             holdCheckETag = true;
-            ImageUploader.imageRequired('image', false);
-            $("#editAccountDlg").dialog('option', 'name', "Modification du compte");
-            $("#editAccountDlgOkBtn").text("Modifier");
-            $("#editAccountDlg").dialog('open');
+            ImageUploader.imageRequired('avatar', false);
+            $("#accountDlg").dialog('option', 'title', "Modification de compte");
+            $("#AccountDlgOkBtn").text("Modifier");
+            $("#accountDlg").dialog('open');
         }
 
         function deleteAccount(e) {
@@ -452,11 +496,12 @@
         function resetAccountForm() {
             $("#Id_input").val("0");
             $("#GUID_input").val("");
+            $("#avatarUrl_input").val("");
             $("#name_input").val("");
             $("#email_input").val("");
             $("#mdp_input").val("");
             $("#mdpVerif_input").val(""),
-                ImageUploader.resetImage('image');
+                ImageUploader.resetImage('avatar');
         }
         function accountFromForm() {
             if ($("#accountForm")[0].checkValidity()) {
@@ -465,7 +510,9 @@
                     Name: $("#name_input").val(),
                     Email: $("#email_input").val(),
                     Password: $("#mdp_input").val(),
-                    AvatarGUID: $("#GUID_input").val()
+                    AvatarGUID: $("#GUID_input").val(),
+                    ImageData: ImageUploader.getImageData("avatar"),
+                    AvatarURL: $("#avatarUrl_input").val()
                 };
                 return account;
             } else {
@@ -474,10 +521,12 @@
             return false;
         }
         function accountToForm(account) {
-            $("#editId_input").val(account.Id);
-            $("#editName_input").val(account.Name);
-            $("#editEmail_input").val(account.Email);
-            $("#editGUID_input").val(account.AvatarGUID);
+            $("#Id_input").val(account.Id);
+            $("#name_input").val(account.Name);
+            $("#email_input").val(account.Email);
+            $("#GUID_input").val(account.AvatarGUID);
+            ImageUploader.setImageData('avatar', account.AvatarURL);
+            $("#avatarUrl_input").val(account.AvatarURL);
 
             /*
             $("")
@@ -496,6 +545,10 @@
             $("#loginDlg").dialog('option', 'title', "Se connecter");
             $("#loginDlgOkBtn").text("Connexion");
             $("#loginDlg").dialog('open');
+            if (localStorage.getItem("Email") != "" && localStorage.getItem("Password") != "") {
+                $("#loginEmail_input").val(localStorage.getItem("mail"));
+                $("#password_input").val(localStorage.getItem("Password"));
+            }
         }
 
         //idem, mais pour se déconnecter
@@ -514,10 +567,12 @@
             //console.log("it works")
         }
         function setUserLocalstorage(user) {
-            localStorage.setItem("user", user);
+            localStorage.setItem("user", JSON.stringify(user));
         }
         function setUserSessionStorage(user) {
-            sessionStorage.setItem("user", user);
+            console.log(user);
+            sessionStorage.setItem("user", JSON.stringify(user));
+            //sessionStorage.setItem("userId", user.Id);
         }
         //ça permet à la connection automatique
         function updateConfirmation() {
@@ -527,20 +582,23 @@
         function updateConnected() {
             if ($('#isChecked_input').is(':checked')) {
                 let userLocal = retrieveCredentials();
-                setLocalstorage();
+                //console.log(userLocal);
+                //setUserLocalstorage(userLocal);
+                localStorage.setItem("mail", JSON.stringify(userLocal.Email));
+                localStorage.setItem("Password", JSON.stringify(userLocal.Password));
             }
             //insertProfileInfomation();
             let userInfo = retrieveUserInfo();
             //let userInfo = retrieveCredentials();
             //setUserLocalstorage(userInfo);
             //setUserSessionStorage(userInfo);
-            console.log(userInfo)
-            console.log(userInfo.Name)
-            console.log(userInfo.Id)
+            //console.log(userInfo)
+            //console.log(userInfo.Name)
+            //console.log(userInfo.Id)
 
             // afficher avatar et nom usager
             $('#loggedUserAvatarContainer').empty();
-            $('#loggedUserAvatarContainer').append($("<img src='" + userInfo.AvatarURL + "' />"));
+            $('#loggedUserAvatarContainer').append($("<img class='avatar' src='" + userInfo.AvatarURL + "' />"));
             $("#loggedUserName").text(userInfo.Name);
 
             $("#newloginCmd").hide();
@@ -562,23 +620,31 @@
             //localStorage.removeItem("user");
             //localStorage.removeItem("token");
             sessionStorage.removeItem("user");
-            //sessionStorage.removeItem("token");
-            console.log(profil);
+            sessionStorage.removeItem("token");
+            //console.log(profil);
 
             $("#newloginCmd").show();
             $("#newRegisterCmd").show();
 
             $("#editAccountCmd").hide();//modifier le compte , donc devoir changer le nom
             $("#newLogoutCmd").hide();
+            $("#newImageCmd").hide();
         }
         //On récupère les infos de l'utilisateur.
         function retrieveUserInfo() {
             //return JSON.parse(localStorage.getItem('user'));
-            return JSON.parse(sessionStorage.getItem('user'));
+            let user = JSON.parse(sessionStorage.getItem('user'));
+            //console.log(user);
+            return user;
         }
         //C'est relié au Login en retrivant l'email et le password
         function retrieveCredentials() {
-            let user = { Email: $("#loginEmail_input").val(), Password: $("#password_input").val() };
+            let user = {
+                Email: $("#loginEmail_input").val(),
+                Password: $("#password_input").val()
+            };
+
+            //let user = { "Email": $("#loginEmail_input").val(), "Password": $("#password_input").val() };
             return user;
         }
         //Ça correspond à la vérification du code fournis par le courriel automatisé
@@ -666,7 +732,7 @@
                         //PostUser(user, setUserLocalstorage, updateRegister, error);
                         PostUser(user, setUserSessionStorage, error);
                         $(this).dialog("close");
-                        //updateRegister();
+                        updateRegister();
                         //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
                     }
                 },
@@ -712,8 +778,8 @@
             });
 
 
-            $("#editAccountCmd").click(function () { editAccount(function () { retrieveUserInfo }) });
-            $("#editAccountDlg").dialog({
+            $("#editAccountCmd").click(editAccount);
+            $("#accountDlg").dialog({
                 title: "...",
                 autoOpen: false,
                 modal: true,
@@ -727,25 +793,33 @@
                 maxHeight: 780,
                 position: { my: "top", at: "top", of: window },
                 buttons: [{
-                    id: "editAccountDlgOkBtn",
+                    id: "accoutDlgOkBtn",
                     text: "modifier",
                     click: function () {
+                        //let user = retrieveUserInfo();
                         let user = accountFromForm();
-                        //Modify(user, setUserLocalstorage, error);
-                        Modify(user, setUserSessionStorage, error);
-                        $(this).dialog("close");
-                        updateRegister();
-                        //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
+                        if (user) {
+                            setUserSessionStorage(user);
+                            editUser(user, updateConnected, error);
+
+                            //Modify(user, setUserLocalstorage, error);
+
+                            $(this).dialog("close");
+                            //updateRegister();
+                            //alert("Vous vous avez bien enregister, allez voir votre boite mail pour confirmer votre inscription");
+                        }
                     }
                 },
                 {
+
                     text: "Annuler",
                     click: function () {
                         holdCheckETag = false;
                         $(this).dialog("close");
                     }
+
                 }]
-            })
+            });
 
 
             //$("#VerifyAccountCmd").click(signIn)
@@ -766,7 +840,7 @@
                     id: "verifyDlgOkBtn",
                     text: "verify",
                     click: function () {
-                        let user = localStorage.getItem("user");
+                        let user = sessionStorage.getItem("user");
                         let code = $("#code_input").val();
                         if (registerMode) {
                             let data = { "Id": user, "VerifyCode": code };
